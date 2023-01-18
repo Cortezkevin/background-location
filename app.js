@@ -1,12 +1,21 @@
 const express = require('express');
-const app = express();
 const cors = require('cors');
-const http = require('http');
 const socketio = require('socket.io');
 
-app.use( cors() );
+const notificationRoute = require('./routes/notification');
 
-const server = http.createServer( app );
+const app = express();
+require('dotenv').config();
+
+app.use( cors() );
+app.use( express.json() );
+
+app.use('/api/notification', notificationRoute);
+
+const PORT = process.env.PORT || 3000;
+const server = app.listen( PORT , () => {
+    console.log("SERVER STARTED IN PORT: ", PORT);
+});
 
 const io = socketio( server, {
     cors: {
@@ -20,10 +29,7 @@ io.on('connection', socket => {
 
     socket.on('user-connect', ({ name, latitude, longitude }, callback ) => {
 
-        console.log("USER CONNECTED");
-
         const newUser = { id: new Date().getTime() * 0.0010 , name, coords: { latitude, longitude } };
-        console.log(newUser)
         users.push( newUser );
 
         callback( newUser );
@@ -58,10 +64,4 @@ io.on('connection', socket => {
     })
 
     io.emit('users', users);
-});
-
-const PORT = process.env.PORT || 3000;
-
-server.listen( PORT , () => {
-    console.log("SERVER STARTED IN PORT: ", 3000);
 });
